@@ -37,13 +37,13 @@ config = {
     "model": {
         "input_size": 1, # since we are only using 1 feature, close price
         "num_lstm_layers": 2,
-        "lstm_size": 32,
+        "lstm_size": 256,
         "dropout": 0.2,
     },
      "training": {
-        "device": "cuda", # "cuda" or "cpu"
+        "device": "cpu", # "cuda" or "cpu"
         "batch_size": 128,
-        "num_epoch": 10000,
+        "num_epoch": 30000,
         "learning_rate": 0.02,
         "scheduler_step_size": 40,
     }
@@ -80,6 +80,7 @@ plt.title("Daily close price for " + config["alpha_vantage"]["symbol"] + ", " + 
 plt.grid(True
         , which='major', axis='y', linestyle='--')
 plt.show()
+fig.savefig('static/figure01-history-price.png')
 
 class Normalizer():
     def __init__(self):
@@ -149,6 +150,7 @@ plt.title("Daily close prices for " + config["alpha_vantage"]["symbol"] + " - sh
 plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
+fig.savefig('static/figure02-train-validation-split.png')
 
 
 class TimeSeriesDataset(Dataset):
@@ -320,6 +322,7 @@ plt.xticks(x, xticks, rotation='vertical')
 plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
+fig.savefig('static/figure03-actual-vs-predicted.png')
 
 # prepare data for plotting the zoomed in view of the predicted prices vs. actual prices
 
@@ -340,6 +343,7 @@ plt.xticks(xs, xticks, rotation='vertical')
 plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
+fig.savefig('static/figure04-actual-vs-predicted-zoom.png')
 
 # predict the closing price of the next trading day
 
@@ -379,5 +383,5 @@ plt.title("Predicting the close price of the next trading day")
 plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
-
+fig.savefig('static/figure05-predict-the-unseen.png')
 print("Predicted close price of the next trading day:", round(to_plot_data_y_test_pred[plot_range-1], 2))
