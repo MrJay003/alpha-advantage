@@ -41,7 +41,7 @@ config = {
         "dropout": 0.2,
     },
      "training": {
-        "device": "cpu", # "cuda" or "cpu"
+        "device": "cuda", # "cuda" or "cpu"
         "batch_size": 128,
         "num_epoch": 30000,
         "learning_rate": 0.02,
