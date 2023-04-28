@@ -1,0 +1,4 @@
+numpy
+torch
+matplotlib
+alpha_vantage

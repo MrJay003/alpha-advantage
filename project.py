@@ -1,4 +1,5 @@
 import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,7 +14,6 @@ from alpha_vantage.timeseries import TimeSeries
 
 print("All libraries loaded")
 
-"""ConfigMap to get symbol and set model and training size"""
 config = {
     "alpha_vantage": {
         "key": "7W5IQZO3II3V9J4U", # you can use the demo API key for this project, but please make sure to get your own API key at https://www.alphavantage.co/support/#api-key
@@ -36,21 +36,21 @@ config = {
     },
     "model": {
         "input_size": 1, # since we are only using 1 feature, close price
-        "num_lstm_layers": 32,
-        "lstm_size": 128,
+        "num_lstm_layers": 2,
+        "lstm_size": 32,
         "dropout": 0.2,
     },
-    "training": {
+     "training": {
         "device": "cuda", # "cuda" or "cpu"
         "batch_size": 128,
         "num_epoch": 10000,
         "learning_rate": 0.02,
         "scheduler_step_size": 40,
     }
+}
 
-""" """
 def download_data(config):
-    ts = TimeSeries(key='7W5IQZO3II3V9J4U') #you can use the demo API key for this project, but please make sure to eventually get your own API key at https://www.alphavantage.co/support/#api-key.
+    ts = TimeSeries(key=config["alpha_vantage"]["key"])
     data, meta_data = ts.get_daily_adjusted(config["alpha_vantage"]["symbol"], outputsize=config["alpha_vantage"]["outputsize"])
 
     data_date = [date for date in data.keys()]
@@ -77,7 +77,8 @@ xticks = [data_date[i] if ((i%config["plots"]["xticks_interval"]==0 and (num_dat
 x = np.arange(0,len(xticks))
 plt.xticks(x, xticks, rotation='vertical')
 plt.title("Daily close price for " + config["alpha_vantage"]["symbol"] + ", " + display_date_range)
-plt.grid(True, which='major', axis='y', linestyle='--')
+plt.grid(True
+        , which='major', axis='y', linestyle='--')
 plt.show()
 
 class Normalizer():
@@ -152,7 +153,8 @@ plt.show()
 
 class TimeSeriesDataset(Dataset):
     def __init__(self, x, y):
-        x = np.expand_dims(x, 2) # in our case, we have only 1 feature, so we need to convert `x` into [batch, sequence, features] for LSTM
+        x = np.expand_dims(x,
+                           2)  # in our case, we have only 1 feature, so we need to convert `x` into [batch, sequence, features] for LSTM
         self.x = x.astype(np.float32)
         self.y = y.astype(np.float32)
 
@@ -161,6 +163,7 @@ class TimeSeriesDataset(Dataset):
 
     def __getitem__(self, idx):
         return (self.x[idx], self.y[idx])
+
 
 dataset_train = TimeSeriesDataset(data_x_train, data_y_train)
 dataset_val = TimeSeriesDataset(data_x_val, data_y_val)
@@ -171,6 +174,7 @@ print("Validation data shape", dataset_val.x.shape, dataset_val.y.shape)
 train_dataloader = DataLoader(dataset_train, batch_size=config["training"]["batch_size"], shuffle=True)
 val_dataloader = DataLoader(dataset_val, batch_size=config["training"]["batch_size"], shuffle=True)
 
+
 class LSTMModel(nn.Module):
     def __init__(self, input_size=1, hidden_layer_size=32, num_layers=2, output_size=1, dropout=0.2):
         super().__init__()
@@ -178,20 +182,21 @@ class LSTMModel(nn.Module):
 
         self.linear_1 = nn.Linear(input_size, hidden_layer_size)
         self.relu = nn.ReLU()
-        self.lstm = nn.LSTM(hidden_layer_size, hidden_size=self.hidden_layer_size, num_layers=num_layers, batch_first=True)
+        self.lstm = nn.LSTM(hidden_layer_size, hidden_size=self.hidden_layer_size, num_layers=num_layers,
+                            batch_first=True)
         self.dropout = nn.Dropout(dropout)
-        self.linear_2 = nn.Linear(num_layers*hidden_layer_size, output_size)
+        self.linear_2 = nn.Linear(num_layers * hidden_layer_size, output_size)
 
         self.init_weights()
 
     def init_weights(self):
         for name, param in self.lstm.named_parameters():
             if 'bias' in name:
-                 nn.init.constant_(param, 0.0)
+                nn.init.constant_(param, 0.0)
             elif 'weight_ih' in name:
-                 nn.init.kaiming_normal_(param)
+                nn.init.kaiming_normal_(param)
             elif 'weight_hh' in name:
-                 nn.init.orthogonal_(param)
+                nn.init.orthogonal_(param)
 
     def forward(self, x):
         batchsize = x.shape[0]
@@ -209,7 +214,8 @@ class LSTMModel(nn.Module):
         # layer 2
         x = self.dropout(x)
         predictions = self.linear_2(x)
-        return predictions[:,-1]
+        return predictions[:, -1]
+
 
 def run_epoch(dataloader, is_training=False):
     epoch_loss = 0
@@ -241,10 +247,12 @@ def run_epoch(dataloader, is_training=False):
 
     return epoch_loss, lr
 
+
 train_dataloader = DataLoader(dataset_train, batch_size=config["training"]["batch_size"], shuffle=True)
 val_dataloader = DataLoader(dataset_val, batch_size=config["training"]["batch_size"], shuffle=True)
 
-model = LSTMModel(input_size=config["model"]["input_size"], hidden_layer_size=config["model"]["lstm_size"], num_layers=config["model"]["num_lstm_layers"], output_size=1, dropout=config["model"]["dropout"])
+model = LSTMModel(input_size=config["model"]["input_size"], hidden_layer_size=config["model"]["lstm_size"],
+                  num_layers=config["model"]["num_lstm_layers"], output_size=1, dropout=config["model"]["dropout"])
 model = model.to(config["training"]["device"])
 
 criterion = nn.MSELoss()
@@ -257,9 +265,10 @@ for epoch in range(config["training"]["num_epoch"]):
     scheduler.step()
 
     print('Epoch[{}/{}] | loss train:{:.6f}, test:{:.6f} | lr:{:.6f}'
-              .format(epoch+1, config["training"]["num_epoch"], loss_train, loss_val, lr_train))
+          .format(epoch + 1, config["training"]["num_epoch"], loss_train, loss_val, lr_train))
 
-              # here we re-initialize dataloader so the data doesn't shuffled, so we can plot the values by date
+
+# here we re-initialize dataloader so the data doesn't shuffled, so we can plot the values by date
 
 train_dataloader = DataLoader(dataset_train, batch_size=config["training"]["batch_size"], shuffle=False)
 val_dataloader = DataLoader(dataset_val, batch_size=config["training"]["batch_size"], shuffle=False)
@@ -312,7 +321,7 @@ plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
 
-# prepare data for plotting the zoomed in view of the predicted prices (on validation set) vs. actual prices
+# prepare data for plotting the zoomed in view of the predicted prices vs. actual prices
 
 to_plot_data_y_val_subset = scaler.inverse_transform(data_y_val)
 to_plot_predicted_val = scaler.inverse_transform(predicted_val)
@@ -366,10 +375,9 @@ fig.patch.set_facecolor((1.0, 1.0, 1.0))
 plt.plot(plot_date_test, to_plot_data_y_val, label="Actual prices", marker=".", markersize=10, color=config["plots"]["color_actual"])
 plt.plot(plot_date_test, to_plot_data_y_val_pred, label="Past predicted prices", marker=".", markersize=10, color=config["plots"]["color_pred_val"])
 plt.plot(plot_date_test, to_plot_data_y_test_pred, label="Predicted price for next day", marker=".", markersize=20, color=config["plots"]["color_pred_test"])
-plt.title("Predicted close price of the next trading day")
+plt.title("Predicting the close price of the next trading day")
 plt.grid(True, which='major', axis='y', linestyle='--')
 plt.legend()
 plt.show()
 
 print("Predicted close price of the next trading day:", round(to_plot_data_y_test_pred[plot_range-1], 2))
-

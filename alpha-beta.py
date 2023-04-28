@@ -1,15 +1,12 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
-
 from alpha_vantage.timeseries import TimeSeries
+from matplotlib.pyplot import figure
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 
 print("All libraries loaded")
 
@@ -48,7 +45,6 @@ config = {
         "scheduler_step_size": 40,
     }
 
-""" """
 def download_data(config):
     ts = TimeSeries(key='7W5IQZO3II3V9J4U') #you can use the demo API key for this project, but please make sure to eventually get your own API key at https://www.alphavantage.co/support/#api-key.
     data, meta_data = ts.get_daily_adjusted(config["alpha_vantage"]["symbol"], outputsize=config["alpha_vantage"]["outputsize"])
